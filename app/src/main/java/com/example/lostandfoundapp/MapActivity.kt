@@ -44,8 +44,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-        
-        // Move database operations to background thread
+
         scope.launch {
             try {
                 val items = withContext(Dispatchers.IO) {

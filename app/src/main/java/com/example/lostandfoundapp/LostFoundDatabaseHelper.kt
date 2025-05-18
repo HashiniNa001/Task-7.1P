@@ -10,7 +10,7 @@ class LostFoundDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
 
     companion object {
         private const val DATABASE_NAME = "LostFound.db"
-        private const val DATABASE_VERSION = 2 // <-- Incremented due to schema change
+        private const val DATABASE_VERSION = 2
 
         const val TABLE_NAME = "items"
         const val COLUMN_ID = "id"
