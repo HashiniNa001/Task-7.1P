@@ -10,7 +10,8 @@ class LostFoundDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
 
     companion object {
         private const val DATABASE_NAME = "LostFound.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2 // <-- Incremented due to schema change
+
         const val TABLE_NAME = "items"
         const val COLUMN_ID = "id"
         const val COLUMN_TYPE = "type"
@@ -19,6 +20,8 @@ class LostFoundDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
         const val COLUMN_DESCRIPTION = "description"
         const val COLUMN_DATE = "date"
         const val COLUMN_LOCATION = "location"
+        const val COLUMN_LATITUDE = "latitude"
+        const val COLUMN_LONGITUDE = "longitude"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -29,17 +32,30 @@ class LostFoundDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
             $COLUMN_PHONE TEXT,
             $COLUMN_DESCRIPTION TEXT,
             $COLUMN_DATE TEXT,
-            $COLUMN_LOCATION TEXT
+            $COLUMN_LOCATION TEXT,
+            $COLUMN_LATITUDE REAL,
+            $COLUMN_LONGITUDE REAL
         )"""
         db.execSQL(createTable)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
-        onCreate(db)
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_LATITUDE REAL")
+            db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_LONGITUDE REAL")
+        }
     }
 
-    fun insertItem(type: String, name: String, phone: String, description: String, date: String, location: String): Boolean {
+    fun insertItem(
+        type: String,
+        name: String,
+        phone: String,
+        description: String,
+        date: String,
+        location: String,
+        latitude: Double?,
+        longitude: Double?
+    ): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {
             put(COLUMN_TYPE, type)
@@ -48,6 +64,8 @@ class LostFoundDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
             put(COLUMN_DESCRIPTION, description)
             put(COLUMN_DATE, date)
             put(COLUMN_LOCATION, location)
+            put(COLUMN_LATITUDE, latitude)
+            put(COLUMN_LONGITUDE, longitude)
         }
         val result = db.insert(TABLE_NAME, null, values)
         return result != -1L
@@ -66,7 +84,9 @@ class LostFoundDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
                     getString(getColumnIndexOrThrow(COLUMN_PHONE)),
                     getString(getColumnIndexOrThrow(COLUMN_DESCRIPTION)),
                     getString(getColumnIndexOrThrow(COLUMN_DATE)),
-                    getString(getColumnIndexOrThrow(COLUMN_LOCATION))
+                    getString(getColumnIndexOrThrow(COLUMN_LOCATION)),
+                    getDoubleOrNull(getColumnIndexOrThrow(COLUMN_LATITUDE)),
+                    getDoubleOrNull(getColumnIndexOrThrow(COLUMN_LONGITUDE))
                 )
                 itemList.add(item)
             }
@@ -79,5 +99,9 @@ class LostFoundDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
         val db = writableDatabase
         val result = db.delete(TABLE_NAME, "$COLUMN_ID=?", arrayOf(id.toString()))
         return result > 0
+    }
+
+    private fun android.database.Cursor.getDoubleOrNull(columnIndex: Int): Double? {
+        return if (isNull(columnIndex)) null else getDouble(columnIndex)
     }
 }

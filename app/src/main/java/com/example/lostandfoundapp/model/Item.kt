@@ -7,5 +7,7 @@ data class Item(
     val phone: String,
     val description: String,
     val date: String,
-    val location: String
+    val location: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )
